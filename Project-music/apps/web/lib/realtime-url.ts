@@ -2,6 +2,14 @@ const DEFAULT_URL =
   process.env.NEXT_PUBLIC_REALTIME_URL ?? 'http://localhost:4000';
 const STORAGE_KEY = 'syncjam:realtime-url';
 
+export function getDefaultRealtimeUrl(): string {
+  return DEFAULT_URL;
+}
+
+export function isCloudDefault(url: string): boolean {
+  return normalizeUrl(url) === normalizeUrl(DEFAULT_URL);
+}
+
 export function normalizeUrl(raw: string): string {
   let s = raw.trim();
   if (!s) return DEFAULT_URL;

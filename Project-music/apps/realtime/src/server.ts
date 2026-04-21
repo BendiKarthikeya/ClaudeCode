@@ -29,11 +29,24 @@ import {
 } from './rooms.js';
 
 const PORT = Number(process.env.PORT ?? 4000);
-const CORS_ORIGIN = process.env.CORS_ORIGIN ?? '*';
+const CORS_ORIGIN_RAW = process.env.CORS_ORIGIN ?? '*';
+const ALLOWED_ORIGINS: '*' | string[] =
+  CORS_ORIGIN_RAW.trim() === '*'
+    ? '*'
+    : CORS_ORIGIN_RAW.split(',')
+        .map((s) => s.trim().replace(/\/+$/, ''))
+        .filter(Boolean);
 
-function corsHeaders() {
+function pickOrigin(reqOrigin: string | undefined): string {
+  if (ALLOWED_ORIGINS === '*') return '*';
+  if (reqOrigin && ALLOWED_ORIGINS.includes(reqOrigin.replace(/\/+$/, ''))) return reqOrigin;
+  return ALLOWED_ORIGINS[0] ?? '*';
+}
+
+function corsHeaders(reqOrigin?: string) {
   return {
-    'Access-Control-Allow-Origin': CORS_ORIGIN,
+    'Access-Control-Allow-Origin': pickOrigin(reqOrigin),
+    'Vary': 'Origin',
     'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   } as const;
@@ -199,30 +212,31 @@ async function resolvePlaylist(urlOrId: string): Promise<{ title: string; items:
 }
 
 const http = createServer(async (req, res) => {
+  const reqOrigin = req.headers.origin;
   if (req.method === 'OPTIONS') {
-    res.writeHead(204, corsHeaders());
+    res.writeHead(204, corsHeaders(reqOrigin));
     res.end();
     return;
   }
   if (req.method === 'POST' && req.url === '/api/rooms') {
     const room = createRoom('');
-    res.writeHead(200, { 'Content-Type': 'application/json', ...corsHeaders() });
+    res.writeHead(200, { 'Content-Type': 'application/json', ...corsHeaders(reqOrigin) });
     res.end(JSON.stringify({ code: room.code }));
     return;
   }
   if (req.method === 'GET' && req.url?.startsWith('/api/resolve')) {
     const url = new URL(req.url, 'http://x').searchParams.get('url');
     if (!url) {
-      res.writeHead(400, corsHeaders());
+      res.writeHead(400, corsHeaders(reqOrigin));
       res.end('missing url');
       return;
     }
     try {
       const item = isSpotifyUrl(url) ? await resolveSpotifyTrack(url) : await resolveYouTube(url);
-      res.writeHead(200, { 'Content-Type': 'application/json', ...corsHeaders() });
+      res.writeHead(200, { 'Content-Type': 'application/json', ...corsHeaders(reqOrigin) });
       res.end(JSON.stringify(item));
     } catch (e) {
-      res.writeHead(400, { 'Content-Type': 'application/json', ...corsHeaders() });
+      res.writeHead(400, { 'Content-Type': 'application/json', ...corsHeaders(reqOrigin) });
       res.end(JSON.stringify({ error: (e as Error).message }));
     }
     return;
@@ -230,7 +244,7 @@ const http = createServer(async (req, res) => {
   if (req.method === 'GET' && req.url?.startsWith('/api/playlist')) {
     const url = new URL(req.url, 'http://x').searchParams.get('url');
     if (!url) {
-      res.writeHead(400, corsHeaders());
+      res.writeHead(400, corsHeaders(reqOrigin));
       res.end('missing url');
       return;
     }
@@ -239,12 +253,12 @@ const http = createServer(async (req, res) => {
         await streamSpotifyPlaylistNDJSON(url, res);
       } else {
         const pl = await resolvePlaylist(url);
-        res.writeHead(200, { 'Content-Type': 'application/json', ...corsHeaders() });
+        res.writeHead(200, { 'Content-Type': 'application/json', ...corsHeaders(reqOrigin) });
         res.end(JSON.stringify(pl));
       }
     } catch (e) {
       if (!res.headersSent) {
-        res.writeHead(400, { 'Content-Type': 'application/json', ...corsHeaders() });
+        res.writeHead(400, { 'Content-Type': 'application/json', ...corsHeaders(reqOrigin) });
         res.end(JSON.stringify({ error: (e as Error).message }));
       } else {
         res.write(JSON.stringify({ type: 'error', error: (e as Error).message }) + '\n');
@@ -254,12 +268,12 @@ const http = createServer(async (req, res) => {
     return;
   }
   if (req.method === 'GET' && req.url === '/network-info') {
-    res.writeHead(200, { 'Content-Type': 'application/json', ...corsHeaders() });
+    res.writeHead(200, { 'Content-Type': 'application/json', ...corsHeaders(reqOrigin) });
     res.end(JSON.stringify({ port: PORT, addresses: lanAddresses() }));
     return;
   }
   if (req.method === 'GET' && req.url === '/health') {
-    res.writeHead(200, { 'Content-Type': 'text/plain', ...corsHeaders() });
+    res.writeHead(200, { 'Content-Type': 'text/plain', ...corsHeaders(reqOrigin) });
     res.end('ok');
     return;
   }
@@ -268,7 +282,7 @@ const http = createServer(async (req, res) => {
 });
 
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(http, {
-  cors: { origin: CORS_ORIGIN === '*' ? true : CORS_ORIGIN },
+  cors: { origin: ALLOWED_ORIGINS === '*' ? true : ALLOWED_ORIGINS },
 });
 
 const socketToRoom = new Map<string, string>();

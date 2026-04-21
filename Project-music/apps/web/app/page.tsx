@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getRealtimeUrl, setRealtimeUrl, clearRealtimeUrl, normalizeUrl } from '../lib/realtime-url';
+import { getRealtimeUrl, setRealtimeUrl, clearRealtimeUrl, normalizeUrl, isCloudDefault, getDefaultRealtimeUrl } from '../lib/realtime-url';
 
 type Mode = 'cloud' | 'lan' | 'bt';
 
@@ -17,7 +17,7 @@ export default function Home() {
 
   useEffect(() => {
     const current = getRealtimeUrl();
-    if (current.includes('localhost') || current.includes('127.0.0.1')) {
+    if (isCloudDefault(current)) {
       setMode('cloud');
     } else {
       setMode('lan');
