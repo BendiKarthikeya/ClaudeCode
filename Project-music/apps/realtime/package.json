@@ -1,0 +1,24 @@
+{
+  "name": "@syncjam/realtime",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts"
+  },
+  "dependencies": {
+    "@distube/ytpl": "^1.2.4",
+    "@syncjam/shared": "*",
+    "cors": "^2.8.5",
+    "socket.io": "^4.7.5",
+    "spotify-url-info": "^3.2.17",
+    "youtube-sr": "^4.3.11"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/node": "^20.12.7",
+    "tsx": "^4.7.2",
+    "typescript": "^5.4.5"
+  }
+}
