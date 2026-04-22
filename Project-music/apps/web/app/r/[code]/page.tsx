@@ -177,7 +177,7 @@ export default function RoomPage() {
         );
         if (!res.ok) throw new Error('Could not resolve that link');
         const item = (await res.json()) as QueueItem;
-        getSocket().emit('QUEUE_ADD', { ...item, addedBy: name });
+        getSocket().emit('QUEUE_ADD', { ...item, addedBy: name ?? '' });
         setAddInput('');
       }
     } catch (e) {
@@ -188,13 +188,13 @@ export default function RoomPage() {
   }
 
   function addOneFromPreview(item: QueueItem) {
-    getSocket().emit('QUEUE_ADD', { ...item, addedBy: name });
+    getSocket().emit('QUEUE_ADD', { ...item, addedBy: name ?? '' });
   }
 
   function addAllFromPreview() {
     if (!playlistPreview) return;
     for (const item of playlistPreview.items) {
-      getSocket().emit('QUEUE_ADD', { ...item, addedBy: name });
+      getSocket().emit('QUEUE_ADD', { ...item, addedBy: name ?? '' });
     }
     setPlaylistPreview(null);
   }
