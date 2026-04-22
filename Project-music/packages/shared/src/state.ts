@@ -25,4 +25,5 @@ export interface RoomState {
   tracks: QueueItem[];
   currentIndex: number;
   participants: Participant[];
+  allowAllControl: boolean;
 }

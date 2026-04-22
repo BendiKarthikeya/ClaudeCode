@@ -24,6 +24,7 @@ import {
   getRoom,
   jumpToIndex,
   removeParticipant,
+  setAllowAllControl,
   skipTrack,
   updatePlayback,
 } from './rooms.js';
@@ -53,13 +54,23 @@ function corsHeaders(reqOrigin?: string) {
 }
 
 function lanAddresses(): string[] {
-  const addrs: string[] = [];
-  for (const iface of Object.values(networkInterfaces())) {
+  const skipIface = /^(utun|awdl|llw|bridge|vnic|vboxnet|docker|tailscale|zt|veth)/i;
+  const preferred: string[] = [];
+  const fallback: string[] = [];
+  for (const [name, iface] of Object.entries(networkInterfaces())) {
+    if (skipIface.test(name)) continue;
     for (const entry of iface ?? []) {
-      if (entry.family === 'IPv4' && !entry.internal) addrs.push(entry.address);
+      if (entry.family !== 'IPv4' || entry.internal) continue;
+      if (entry.address.startsWith('169.254.')) continue;
+      const isPrivate =
+        entry.address.startsWith('192.168.') ||
+        entry.address.startsWith('10.') ||
+        /^172\.(1[6-9]|2\d|3[01])\./.test(entry.address);
+      if (isPrivate) preferred.push(entry.address);
+      else fallback.push(entry.address);
     }
   }
-  return addrs;
+  return preferred.length ? preferred : fallback;
 }
 
 function extractVideoId(url: string): string | null {
@@ -314,7 +325,8 @@ io.on('connection', (socket) => {
     const code = socketToRoom.get(socket.id);
     if (!code) return;
     const room = getRoom(code);
-    if (!room || room.hostId !== socket.id) return;
+    if (!room) return;
+    if (!room.allowAllControl && room.hostId !== socket.id) return;
     const pos = Math.max(0, Math.round(positionMs));
     let next;
     if (action === 'play') next = updatePlayback(code, { isPlaying: true, positionMs: pos });
@@ -336,7 +348,8 @@ io.on('connection', (socket) => {
     const code = socketToRoom.get(socket.id);
     if (!code) return;
     const room = getRoom(code);
-    if (!room || room.hostId !== socket.id) return;
+    if (!room) return;
+    if (!room.allowAllControl && room.hostId !== socket.id) return;
     const result = skipTrack(code);
     if (result) {
       io.to(code).emit('PLAYBACK_UPDATE', result.playback);
@@ -356,7 +369,8 @@ io.on('connection', (socket) => {
     const code = socketToRoom.get(socket.id);
     if (!code) return;
     const room = getRoom(code);
-    if (!room || room.hostId !== socket.id) return;
+    if (!room) return;
+    if (!room.allowAllControl && room.hostId !== socket.id) return;
     const result = jumpToIndex(code, index);
     if (result) {
       io.to(code).emit('PLAYBACK_UPDATE', result.playback);
@@ -378,6 +392,15 @@ io.on('connection', (socket) => {
       text: clean,
       at: Date.now(),
     });
+  });
+
+  socket.on('SET_CONTROL_MODE', (allow) => {
+    const code = socketToRoom.get(socket.id);
+    if (!code) return;
+    const room = getRoom(code);
+    if (!room || room.hostId !== socket.id) return;
+    const updated = setAllowAllControl(code, !!allow);
+    if (updated) io.to(code).emit('ROOM_STATE', updated);
   });
 
   socket.on('disconnect', () => {

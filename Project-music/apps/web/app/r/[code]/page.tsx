@@ -11,7 +11,8 @@ export default function RoomPage() {
   const params = useParams<{ code: string }>();
   const code = (params.code ?? '').toUpperCase();
 
-  const [name] = useState(() => `Guest-${Math.floor(Math.random() * 1000)}`);
+  const [name, setName] = useState<string | null>(null);
+  const [nameInput, setNameInput] = useState('');
   const [room, setRoom] = useState<RoomState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [audioUnlocked, setAudioUnlocked] = useState(false);
@@ -29,6 +30,22 @@ export default function RoomPage() {
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    try {
+      const stored = localStorage.getItem('syncjam:name');
+      if (stored && stored.trim()) setName(stored.trim());
+    } catch {}
+  }, []);
+
+  function submitName(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = nameInput.trim().slice(0, 32);
+    if (!trimmed) return;
+    try { localStorage.setItem('syncjam:name', trimmed); } catch {}
+    setName(trimmed);
+  }
+
+  useEffect(() => {
+    if (!name) return;
     const socket = getSocket();
 
     const onConnect = () => {
@@ -70,6 +87,7 @@ export default function RoomPage() {
   }, [code, name]);
 
   const isHost = useMemo(() => room?.hostId === myIdRef.current, [room]);
+  const canControl = isHost || !!room?.allowAllControl;
 
   const sendControl = useCallback(
     (action: 'play' | 'pause' | 'seek', positionMs?: number) => {
@@ -197,6 +215,34 @@ export default function RoomPage() {
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
 
+  if (!name) {
+    return (
+      <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-6 p-6">
+        <div>
+          <h1 className="text-3xl font-bold">Join room {code}</h1>
+          <p className="mt-2 text-white/60">What should we call you?</p>
+        </div>
+        <form onSubmit={submitName} className="flex flex-col gap-3">
+          <input
+            autoFocus
+            value={nameInput}
+            onChange={(e) => setNameInput(e.target.value)}
+            placeholder="Your name"
+            maxLength={32}
+            className="rounded-lg border border-white/10 bg-white/5 px-4 py-3 outline-none focus:border-white/30"
+          />
+          <button
+            type="submit"
+            disabled={!nameInput.trim()}
+            className="rounded-lg bg-fuchsia-600 px-5 py-3 font-semibold hover:bg-fuchsia-500 disabled:opacity-50"
+          >
+            Join
+          </button>
+        </form>
+      </main>
+    );
+  }
+
   if (error) {
     return (
       <main className="mx-auto max-w-xl p-6">
@@ -220,15 +266,35 @@ export default function RoomPage() {
         <div>
           <h1 className="text-2xl font-bold">Room {room.code}</h1>
           <p className="text-sm text-white/50">
-            {room.participants.length} listening · {isHost ? 'You are host' : 'Host controls playback'}
+            {room.participants.length} listening ·{' '}
+            {isHost
+              ? 'You are host'
+              : room.allowAllControl
+              ? 'Everyone can control'
+              : 'Host controls playback'}
           </p>
         </div>
-        <button
-          onClick={copyInvite}
-          className="rounded-lg border border-white/10 px-3 py-2 text-sm hover:bg-white/5"
-        >
-          Copy invite link
-        </button>
+        <div className="flex items-center gap-2">
+          {isHost && (
+            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm hover:bg-white/5">
+              <input
+                type="checkbox"
+                checked={room.allowAllControl}
+                onChange={(e) =>
+                  getSocket().emit('SET_CONTROL_MODE', e.target.checked)
+                }
+                className="accent-fuchsia-500"
+              />
+              Everyone can control
+            </label>
+          )}
+          <button
+            onClick={copyInvite}
+            className="rounded-lg border border-white/10 px-3 py-2 text-sm hover:bg-white/5"
+          >
+            Copy invite link
+          </button>
+        </div>
       </header>
 
       {!audioUnlocked ? (
@@ -250,7 +316,7 @@ export default function RoomPage() {
         </div>
       )}
 
-      {isHost && audioUnlocked && hasVideo && (
+      {canControl && audioUnlocked && hasVideo && (
         <div className="mt-4 flex flex-wrap gap-2">
           <button
             onClick={() => sendControl(room.playback.isPlaying ? 'pause' : 'play')}
@@ -343,7 +409,7 @@ export default function RoomPage() {
       <PlaylistBox
         tracks={room.tracks}
         currentIndex={room.currentIndex}
-        isHost={isHost}
+        canControl={canControl}
         onJump={(i) => getSocket().emit('QUEUE_JUMP', i)}
       />
 
@@ -406,12 +472,12 @@ export default function RoomPage() {
 function PlaylistBox({
   tracks,
   currentIndex,
-  isHost,
+  canControl,
   onJump,
 }: {
   tracks: QueueItem[];
   currentIndex: number;
-  isHost: boolean;
+  canControl: boolean;
   onJump: (index: number) => void;
 }) {
   const currentRef = useRef<HTMLLIElement>(null);
@@ -470,7 +536,7 @@ function PlaylistBox({
                 </p>
                 <p className="text-xs text-white/40">added by {t.addedBy}</p>
               </div>
-              {isHost && !isNow && (
+              {canControl && !isNow && (
                 <button
                   onClick={() => onJump(i)}
                   className="shrink-0 rounded-lg border border-white/10 px-2.5 py-1 text-xs font-semibold hover:bg-white/10"

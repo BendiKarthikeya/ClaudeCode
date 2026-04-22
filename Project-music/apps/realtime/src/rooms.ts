@@ -24,6 +24,7 @@ export function createRoom(hostSocketId: string): RoomState {
     tracks: [],
     currentIndex: -1,
     participants: [],
+    allowAllControl: false,
   };
   rooms.set(code, state);
   return state;
@@ -58,6 +59,16 @@ export function removeParticipant(code: string, id: string): RoomState | undefin
     next.isHost = true;
     room.hostId = next.id;
   }
+  return room;
+}
+
+export function setAllowAllControl(
+  code: string,
+  allow: boolean,
+): RoomState | undefined {
+  const room = rooms.get(code);
+  if (!room) return;
+  room.allowAllControl = allow;
   return room;
 }
 

@@ -25,4 +25,5 @@ export interface ClientToServerEvents {
   QUEUE_JUMP: (index: number) => void;
   HEARTBEAT: (ack: (serverNow: number, playback: PlaybackState) => void) => void;
   CHAT_SEND: (text: string) => void;
+  SET_CONTROL_MODE: (allowAllControl: boolean) => void;
 }
