@@ -1,0 +1,7 @@
+.env
+.env.local
+.venv
+.claude
+.mcp.json
+CLAUDE.md
+package-lock.json
