@@ -1045,3 +1045,153 @@ body::before {
   border: 1px solid rgba(120, 200, 140, 0.30);
   padding: 8px 10px; border-radius: 8px; font-size: 12px;
 }
+
+/* =========================================================
+   RESPONSIVE — tablet + mobile
+   ========================================================= */
+
+/* Hidden by default on desktop */
+.mobile-menu-btn { display: none; }
+.mobile-nav-backdrop { display: none; }
+
+/* Tablet */
+@media (max-width: 1024px) {
+  :root { --sidebar-w: 200px; }
+  .page { padding: var(--pad-4) var(--pad-4) var(--pad-5); }
+  .topbar { padding: 12px var(--pad-4); }
+  .dash-grid { grid-template-columns: 1fr; }
+  .dash-hero { grid-template-columns: 1fr; gap: 20px; padding: 22px 24px; }
+  .hero__title { font-size: 42px; }
+  .history-grid { grid-template-columns: 1fr; }
+  .gcal-connect { grid-template-columns: 1fr; padding: 28px 24px; gap: 20px; }
+  .settings-grid { grid-template-columns: 1fr; gap: 24px; }
+  .focus-clock { --size: 280px; }
+  .focus-clock__num-main { font-size: 72px; }
+  .focus-title { font-size: 48px; }
+  .search { min-width: 180px; }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .app { grid-template-columns: 1fr; }
+
+  /* Sidebar → slide-in drawer */
+  .sidebar {
+    position: fixed; top: 0; bottom: 0; left: 0;
+    width: 260px; max-width: 82vw;
+    z-index: 80;
+    transform: translateX(-100%);
+    transition: transform 220ms ease;
+    box-shadow: var(--shadow-3);
+  }
+  .app.is-mobile-nav-open .sidebar { transform: translateX(0); }
+  .mobile-nav-backdrop {
+    display: block;
+    position: fixed; inset: 0; z-index: 70;
+    background: oklch(0 0 0 / 0.5);
+    opacity: 0; pointer-events: none;
+    transition: opacity 200ms ease;
+  }
+  .app.is-mobile-nav-open .mobile-nav-backdrop { opacity: 1; pointer-events: auto; }
+
+  .mobile-menu-btn { display: inline-flex; }
+
+  /* Topbar */
+  .topbar { padding: 10px 14px; gap: 8px; min-height: 52px; }
+  .crumbs { font-size: 10px; letter-spacing: 0.06em; }
+  .crumbs span:not(:last-child):not(b) { display: none; }
+  .search { display: none; }
+  .topbar .btn { padding: 6px 10px; font-size: 12px; }
+  .topbar .btn--icon { padding: 6px; }
+
+  /* Page */
+  .page { padding: var(--pad-3) var(--pad-3) var(--pad-5); }
+  .page__head { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: var(--pad-4); }
+  .page__title { font-size: 32px; }
+
+  /* Dashboard */
+  .dash-hero { padding: 20px 18px; }
+  .hero__title { font-size: 32px; }
+  .hero__stats { grid-template-columns: 1fr 1fr; }
+  .stat__num { font-size: 28px; }
+  .focus-ring { --size: 140px; }
+  .focus-ring__num { font-size: 32px; }
+
+  /* Matrix — stack as single column */
+  .matrix-wrap {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    min-height: 0;
+    gap: 10px;
+  }
+  .axis { display: none; }
+  .quad {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    border-radius: var(--r-2) !important;
+    border: 1px solid var(--line-soft) !important;
+    padding: 14px;
+    min-height: 160px;
+  }
+  .quad--tr .quad__head,
+  .quad--br .quad__head { flex-direction: row; text-align: left; }
+  .quad--tr .quad__count,
+  .quad--br .quad__count { margin-left: auto; margin-right: 0; }
+  .matrix-hub { display: none; }
+  .quad__title { font-size: 18px; }
+
+  /* Calendar — horizontal scroll */
+  .cal-toolbar { flex-wrap: wrap; gap: 8px; }
+  .cal-range { font-size: 22px; margin-right: 8px; }
+  .cal-grid {
+    grid-template-columns: 40px repeat(7, minmax(90px, 1fr));
+    overflow-x: auto;
+  }
+  .cal-head__day { padding: 8px; }
+  .cal-head__day-num { font-size: 16px; }
+  .cal-hour { padding: 4px 6px; font-size: 9px; height: 48px; }
+  .cal-col { background-size: 100% 48px; }
+  .cal-event { padding: 4px 6px; font-size: 11px; }
+  .cal-event__title { font-size: 11.5px; }
+
+  /* Focus */
+  .focus-page { padding: 20px 16px; gap: 20px; }
+  .focus-clock { --size: 230px; }
+  .focus-clock__num-main { font-size: 56px; }
+  .focus-title { font-size: 32px; }
+  .focus-bottom { grid-template-columns: 1fr; gap: 10px; }
+  .focus-ctrl .btn { padding: 8px 12px; font-size: 12px; }
+  .focus-ctrl__primary { width: 48px; height: 48px; }
+
+  /* History heatmap — fewer columns */
+  .heat { grid-template-columns: repeat(14, 1fr); }
+  .history-row { grid-template-columns: 20px 1fr 60px; }
+  .history-row > :nth-child(4) { display: none; }
+
+  /* Settings */
+  .settings-nav { flex-direction: row; flex-wrap: wrap; gap: 4px; overflow-x: auto; }
+  .settings-row { grid-template-columns: 1fr; gap: 10px; align-items: flex-start; }
+
+  /* Tweaks panel */
+  .tweaks {
+    right: 10px; left: 10px; bottom: 10px; width: auto;
+    max-height: 70vh;
+  }
+  .tweaks__body { max-height: 50vh; }
+
+  /* Quick add */
+  .overlay { padding-top: 8vh; }
+  .qa__input { font-size: 16px; padding: 14px 16px; }
+  .qa__foot { flex-wrap: wrap; gap: 8px; font-size: 9px; }
+}
+
+/* Very small screens */
+@media (max-width: 420px) {
+  .page__title { font-size: 26px; }
+  .hero__title { font-size: 26px; }
+  .hero__stats { grid-template-columns: 1fr; }
+  .cal-range { font-size: 18px; }
+  .focus-clock { --size: 200px; }
+  .focus-clock__num-main { font-size: 48px; }
+  .focus-title { font-size: 26px; }
+}

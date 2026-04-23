@@ -14,6 +14,9 @@ function AppShell() {
   }, [state.tweaks]);
 
   const [tweaksOpen, setTweaksOpen] = React.useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
+
+  React.useEffect(() => { setMobileNavOpen(false); }, [state.route]);
 
   const onRoute = (r) => dispatch({ route: r });
 
@@ -83,14 +86,16 @@ function AppShell() {
   );
 
   return (
-    <div className="app">
-      <Sidebar route={state.route} onRoute={onRoute} focusTaskId={state.focusTaskId} />
+    <div className={`app ${mobileNavOpen ? "is-mobile-nav-open" : ""}`}>
+      <Sidebar route={state.route} onRoute={onRoute} focusTaskId={state.focusTaskId} onCloseMobile={() => setMobileNavOpen(false)} />
+      <div className="mobile-nav-backdrop" onClick={() => setMobileNavOpen(false)} />
       <main className="main">
         {state.route !== "focus" && (
           <Topbar
             crumbs={crumbsFor[state.route]}
             actions={actions}
             onQuickAdd={() => dispatch({ quickAddOpen: true })}
+            onToggleMobileNav={() => setMobileNavOpen(v => !v)}
           />
         )}
         {state.route === "dashboard" && <Dashboard state={state} dispatch={dispatch} onRoute={onRoute} />}

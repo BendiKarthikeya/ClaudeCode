@@ -4,7 +4,7 @@
 
 // Icons is on window
 // ---------- Sidebar ----------
-function Sidebar({ route, onRoute, focusTaskId }) {
+function Sidebar({ route, onRoute, focusTaskId, onCloseMobile }) {
   const [user, setUser] = React.useState(null);
   const [menuOpen, setMenuOpen] = React.useState(false);
   React.useEffect(() => { getCurrentUser().then(setUser); }, []);
@@ -89,9 +89,12 @@ function Sidebar({ route, onRoute, focusTaskId }) {
 }
 
 // ---------- Topbar ----------
-function Topbar({ crumbs, actions, onQuickAdd }) {
+function Topbar({ crumbs, actions, onQuickAdd, onToggleMobileNav }) {
   return (
     <div className="topbar">
+      <button className="btn btn--ghost btn--icon mobile-menu-btn" onClick={onToggleMobileNav} aria-label="Menu">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
       <div className="crumbs">
         {crumbs.map((c, i) => (
           <React.Fragment key={i}>
