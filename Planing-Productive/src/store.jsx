@@ -37,10 +37,46 @@ async function pushRemoteState(userId, state) {
   if (error) console.warn("save state:", error.message);
 }
 
+let _pendingState = null;
 function scheduleSave(state) {
   if (!_userId) return;
+  _pendingState = state;
   clearTimeout(_saveTimer);
-  _saveTimer = setTimeout(() => pushRemoteState(_userId, state), 400);
+  _saveTimer = setTimeout(() => {
+    const s = _pendingState; _pendingState = null;
+    pushRemoteState(_userId, s);
+  }, 150);
+}
+
+function flushSave() {
+  if (!_userId || !_pendingState) return;
+  clearTimeout(_saveTimer);
+  const payload = { ..._pendingState };
+  for (const k of EPHEMERAL) delete payload[k];
+  _pendingState = null;
+  // Best-effort synchronous beacon on unload
+  try {
+    const url = `${window.__SUPABASE_URL}/rest/v1/app_state?on_conflict=user_id`;
+    const body = JSON.stringify([{ user_id: _userId, state: payload, updated_at: new Date().toISOString() }]);
+    const blob = new Blob([body], { type: "application/json" });
+    // sendBeacon can't set auth headers, so fall back to fetch with keepalive
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": window.__SUPABASE_KEY,
+        "Authorization": `Bearer ${window.__SUPABASE_TOKEN || window.__SUPABASE_KEY}`,
+        "Prefer": "resolution=merge-duplicates",
+      },
+      body,
+      keepalive: true,
+    }).catch(() => {});
+  } catch {}
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeunload", flushSave);
+  window.addEventListener("pagehide", flushSave);
 }
 
 function createStore(initial) {
@@ -66,6 +102,10 @@ const store = createStore({ ...DEFAULT_STATE });
 
 async function initStoreForUser(userId) {
   _userId = userId;
+  try {
+    const { data } = await sb.auth.getSession();
+    window.__SUPABASE_TOKEN = data?.session?.access_token || null;
+  } catch {}
   const remote = await fetchRemoteState(userId);
   if (remote && Object.keys(remote).length > 0) {
     store.replace({ ...DEFAULT_STATE, ...remote, quickAddOpen: false, tweaksOpen: false });
