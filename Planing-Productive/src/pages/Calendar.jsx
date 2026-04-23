@@ -42,40 +42,56 @@ function Calendar({ state, dispatch }) {
     });
   }, []);
 
-  const connectGoogle = async () => {
-    setGError("");
-    const { data: sessionData } = await sb.auth.getSession();
-    const token = sessionData?.session?.provider_token;
-    if (token) {
-      setGStatus("loading");
-      try {
-        const evs = await fetchGoogleEvents(token);
-        setGEvents(evs); setGStatus("connected");
-      } catch (e) { setGStatus("error"); setGError(e.message); }
-      return;
-    }
-    const { error } = await sb.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        scopes: "https://www.googleapis.com/auth/calendar.readonly",
-        redirectTo: window.location.href,
-      },
+  const getGoogleToken = React.useCallback(() => {
+    return new Promise((resolve, reject) => {
+      if (!window.google?.accounts?.oauth2) {
+        reject(new Error("Google Identity Services not loaded yet — reload the page"));
+        return;
+      }
+      const tokenClient = window.google.accounts.oauth2.initTokenClient({
+        client_id: window.__GCAL_CLIENT_ID,
+        scope: "https://www.googleapis.com/auth/calendar.readonly",
+        prompt: window.__GCAL_TOKEN ? "" : "consent",
+        callback: (resp) => {
+          if (resp.error) return reject(new Error(resp.error));
+          window.__GCAL_TOKEN = resp.access_token;
+          window.__GCAL_TOKEN_EXP = Date.now() + (resp.expires_in - 60) * 1000;
+          resolve(resp.access_token);
+        },
+        error_callback: (err) => reject(new Error(err?.type || "Google auth failed")),
+      });
+      tokenClient.requestAccessToken();
     });
-    if (error) { setGStatus("error"); setGError(error.message); }
+  }, []);
+
+  const connectGoogle = async () => {
+    setGError(""); setGStatus("loading");
+    try {
+      const token = (window.__GCAL_TOKEN && Date.now() < (window.__GCAL_TOKEN_EXP || 0))
+        ? window.__GCAL_TOKEN
+        : await getGoogleToken();
+      const evs = await fetchGoogleEvents(token);
+      setGEvents(evs); setGStatus("connected");
+    } catch (e) { setGStatus("error"); setGError(e.message); }
   };
 
+  // Auto-reconnect if we already have a valid token in this session
   React.useEffect(() => {
-    (async () => {
-      const { data } = await sb.auth.getSession();
-      const token = data?.session?.provider_token;
-      if (!token) return;
-      setGStatus("loading");
-      try { setGEvents(await fetchGoogleEvents(token)); setGStatus("connected"); }
-      catch (e) { setGStatus("error"); setGError(e.message); }
-    })();
+    if (!window.__GCAL_TOKEN || Date.now() >= (window.__GCAL_TOKEN_EXP || 0)) return;
+    setGStatus("loading");
+    fetchGoogleEvents(window.__GCAL_TOKEN)
+      .then(evs => { setGEvents(evs); setGStatus("connected"); })
+      .catch(e => { setGStatus("error"); setGError(e.message); });
   }, [fetchGoogleEvents]);
 
-  const disconnectGoogle = () => { setGEvents([]); setGStatus("idle"); };
+  const disconnectGoogle = () => {
+    if (window.__GCAL_TOKEN && window.google?.accounts?.oauth2) {
+      try { window.google.accounts.oauth2.revoke(window.__GCAL_TOKEN, () => {}); } catch {}
+    }
+    window.__GCAL_TOKEN = null;
+    window.__GCAL_TOKEN_EXP = 0;
+    setGEvents([]); setGStatus("idle");
+  };
 
   const DATES = getWeekDates();
 

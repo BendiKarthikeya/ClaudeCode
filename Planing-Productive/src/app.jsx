@@ -6,6 +6,13 @@ function AppShell() {
   const [state, setStateRaw] = useStore();
   const dispatch = (patch) => store.set(typeof patch === "function" ? patch : patch);
 
+  // Apply saved appearance tweaks whenever they change in the store
+  React.useEffect(() => {
+    if (!state.tweaks) return;
+    window.__TWEAKS = { ...window.__TWEAKS, ...state.tweaks };
+    window.applyTweaks && window.applyTweaks(window.__TWEAKS);
+  }, [state.tweaks]);
+
   const [tweaksOpen, setTweaksOpen] = React.useState(false);
 
   const onRoute = (r) => dispatch({ route: r });

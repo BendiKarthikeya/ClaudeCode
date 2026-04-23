@@ -3,11 +3,24 @@
 // ============================================================
 // Icons is on window
 function Settings({ state, dispatch }) {
-  const [t, setT] = React.useState(window.__TWEAKS);
+  const [t, setT] = React.useState(() => ({ ...window.__TWEAKS, ...(state.tweaks || {}) }));
+  const [savedT, setSavedT] = React.useState(() => ({ ...window.__TWEAKS, ...(state.tweaks || {}) }));
+  const [saveStatus, setSaveStatus] = React.useState("idle"); // idle | saving | saved
   const update = (patch) => {
     const next = { ...t, ...patch };
     setT(next); window.__TWEAKS = next; window.applyTweaks(next);
     try { window.parent.postMessage({type: "__edit_mode_set_keys", edits: patch}, "*"); } catch {}
+  };
+  const dirty = JSON.stringify(t) !== JSON.stringify(savedT);
+  const saveAppearance = () => {
+    setSaveStatus("saving");
+    dispatch({ tweaks: t });
+    setSavedT(t);
+    setTimeout(() => setSaveStatus("saved"), 200);
+    setTimeout(() => setSaveStatus("idle"), 1800);
+  };
+  const revertAppearance = () => {
+    setT(savedT); window.__TWEAKS = savedT; window.applyTweaks(savedT);
   };
 
   const [section, setSection] = React.useState("appearance");
@@ -93,6 +106,16 @@ function Settings({ state, dispatch }) {
                   <button className="seg__b" aria-pressed={t.density==="comfortable"} onClick={() => update({density:"comfortable"})}>Comfortable</button>
                   <button className="seg__b" aria-pressed={t.density==="compact"} onClick={() => update({density:"compact"})}>Compact</button>
                 </div>
+              </div>
+
+              <div style={{display:"flex", alignItems:"center", justifyContent:"flex-end", gap:10, marginTop:18, paddingTop:14, borderTop:"1px solid var(--line-soft)"}}>
+                <span style={{fontFamily:"var(--font-mono)", fontSize:10, color: saveStatus === "saved" ? "var(--accent)" : "var(--fg-3)", letterSpacing:"0.12em", textTransform:"uppercase"}}>
+                  {saveStatus === "saving" ? "Saving…" : saveStatus === "saved" ? "Saved" : dirty ? "Unsaved changes" : "All changes saved"}
+                </span>
+                {dirty && <button className="btn btn--sm" onClick={revertAppearance}>Revert</button>}
+                <button className="btn btn--sm btn--primary" onClick={saveAppearance} disabled={!dirty || saveStatus !== "idle"}>
+                  Save
+                </button>
               </div>
             </div>
           )}
