@@ -48,17 +48,33 @@ function Calendar({ state, dispatch }) {
         reject(new Error("Google Identity Services not loaded yet — reload the page"));
         return;
       }
+      if (!window.__GCAL_CLIENT_ID) {
+        reject(new Error("Missing __GCAL_CLIENT_ID in index.html"));
+        return;
+      }
       const tokenClient = window.google.accounts.oauth2.initTokenClient({
         client_id: window.__GCAL_CLIENT_ID,
         scope: "https://www.googleapis.com/auth/calendar.readonly",
         prompt: window.__GCAL_TOKEN ? "" : "consent",
         callback: (resp) => {
-          if (resp.error) return reject(new Error(resp.error));
+          if (resp.error) {
+            console.error("[GCal] token callback error", resp);
+            return reject(new Error(resp.error_description || resp.error));
+          }
           window.__GCAL_TOKEN = resp.access_token;
           window.__GCAL_TOKEN_EXP = Date.now() + (resp.expires_in - 60) * 1000;
           resolve(resp.access_token);
         },
-        error_callback: (err) => reject(new Error(err?.type || "Google auth failed")),
+        error_callback: (err) => {
+          console.error("[GCal] error_callback", err);
+          const msg = err?.message || err?.type || "Google auth failed";
+          reject(new Error(
+            msg === "popup_closed" ? "Popup closed before sign-in finished." :
+            msg === "popup_failed_to_open" ? "Popup blocked — allow popups for this site." :
+            msg === "access_denied" ? "You denied Calendar permission." :
+            msg
+          ));
+        },
       });
       tokenClient.requestAccessToken();
     });

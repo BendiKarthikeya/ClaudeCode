@@ -26,6 +26,9 @@ function Sidebar({ route, onRoute, focusTaskId, onCloseMobile }) {
         <div className="brand__mark" />
         <div className="brand__name">Lumen</div>
         <div className="brand__sub">v2.4</div>
+        <button className="sidebar__close" onClick={onCloseMobile} aria-label="Close menu">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
       </div>
 
       <nav className="nav">
@@ -34,7 +37,7 @@ function Sidebar({ route, onRoute, focusTaskId, onCloseMobile }) {
           <button key={it.key}
             className="nav__item"
             aria-current={route === it.key ? "page" : undefined}
-            onClick={() => onRoute(it.key)}>
+            onClick={() => { onRoute(it.key); onCloseMobile && onCloseMobile(); }}>
             <it.icon className="nav__icon" />
             <span>{it.label}</span>
             {it.badge
@@ -47,7 +50,7 @@ function Sidebar({ route, onRoute, focusTaskId, onCloseMobile }) {
           <button key={it.key}
             className="nav__item"
             aria-current={route === it.key ? "page" : undefined}
-            onClick={() => onRoute(it.key)}>
+            onClick={() => { onRoute(it.key); onCloseMobile && onCloseMobile(); }}>
             <it.icon className="nav__icon" />
             <span>{it.label}</span>
             <span className="nav__kbd">{it.kbd}</span>
@@ -215,10 +218,12 @@ function QuickAdd({ onClose, onAdd }) {
           </label>
         </div>
         <div className="qa__foot">
-          <span><b>↵</b> Add</span>
-          <span><b>Tab</b> Pick quadrant</span>
-          <span><b>Esc</b> Close</span>
-          <span style={{marginLeft: "auto"}}>Auto-classifies by keywords</span>
+          <span className="qa__hint"><b>↵</b> Add</span>
+          <span className="qa__hint"><b>Tab</b> Pick quadrant</span>
+          <span className="qa__hint"><b>Esc</b> Close</span>
+          <button className="btn btn--primary btn--sm qa__submit" onClick={submit} disabled={!text.trim()}>
+            <Icons.Plus size={12}/> Add task
+          </button>
         </div>
       </div>
     </div>

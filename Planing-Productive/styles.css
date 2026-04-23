@@ -930,6 +930,13 @@ body::before {
   border-top: 1px solid var(--line-soft);
 }
 .qa__foot b { color: var(--fg-1); font-weight: 500; }
+.qa__submit { margin-left: auto; letter-spacing: 0; text-transform: none; font-family: var(--font-ui); }
+.qa__submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+@media (max-width: 560px) {
+  .qa__foot .qa__hint { display: none; }
+  .qa__submit { margin-left: 0; width: 100%; justify-content: center; padding: 10px; }
+}
 
 /* =========================================================
    Tweaks panel
@@ -1035,6 +1042,24 @@ body::before {
   padding: 8px 10px; border-radius: 8px; font-size: 12px;
 }
 .auth-submit { width: 100%; justify-content: center; padding: 10px; font-size: 14px; }
+.auth-divider {
+  display: flex; align-items: center; gap: 10px;
+  color: var(--fg-3); font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  margin: 4px 0;
+}
+.auth-divider::before, .auth-divider::after {
+  content: ""; flex: 1; height: 1px; background: var(--line-soft);
+}
+.auth-google {
+  width: 100%; justify-content: center; padding: 10px;
+  background: #ffffff; color: #1f1f1f;
+  border: 1px solid #dadce0;
+  font-size: 14px; font-weight: 500;
+  gap: 10px;
+}
+.auth-google:hover { background: #f7f7f7; border-color: #c8c8c8; }
+.auth-google:disabled { opacity: 0.6; cursor: not-allowed; }
 .auth-hint { text-align: center; font-size: 12px; color: var(--text-2); }
 .auth-hint a { color: var(--accent); text-decoration: none; }
 .auth-hint a:hover { text-decoration: underline; }
@@ -1053,6 +1078,8 @@ body::before {
 /* Hidden by default on desktop */
 .mobile-menu-btn { display: none; }
 .mobile-nav-backdrop { display: none; }
+.sidebar__close { display: none; margin-left: auto; color: var(--fg-2); background: transparent; border: 0; padding: 4px; cursor: pointer; }
+.sidebar__close:hover { color: var(--fg-0); }
 
 /* Tablet */
 @media (max-width: 1024px) {
@@ -1095,6 +1122,8 @@ body::before {
   .app.is-mobile-nav-open .mobile-nav-backdrop { opacity: 1; pointer-events: auto; }
 
   .mobile-menu-btn { display: inline-flex; }
+  .sidebar__close { display: inline-flex; }
+  .brand__sub { display: none; }
 
   /* Topbar */
   .topbar { padding: 10px 14px; gap: 8px; min-height: 52px; }
