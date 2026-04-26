@@ -31,6 +31,14 @@ async function getCurrentUser() {
   return data?.user || null;
 }
 
+async function signInWithGoogle() {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: window.location.origin + window.location.pathname },
+  });
+  if (error) throw error;
+}
+
 async function resetPassword(email) {
   const { error } = await sb.auth.resetPasswordForEmail(email.trim().toLowerCase());
   if (error) throw error;
@@ -102,6 +110,22 @@ function AuthScreen({ onAuthed }) {
 
         <button type="submit" className="btn btn--primary auth-submit" disabled={busy}>
           {busy ? "…" : (mode === "signup" ? "Create account" : "Log in")}
+        </button>
+
+        <div className="auth-divider"><span>or</span></div>
+
+        <button
+          type="button"
+          className="btn auth-google"
+          onClick={async () => {
+            setErr(""); setMsg(""); setBusy(true);
+            try { await signInWithGoogle(); }
+            catch (ex) { setErr(ex.message || String(ex)); setBusy(false); }
+          }}
+          disabled={busy}
+        >
+          <Icons.Google size={16} />
+          <span>Continue with Google</span>
         </button>
 
         <div className="auth-hint">
