@@ -13,12 +13,38 @@ function getWeekDates() {
   });
 }
 
+const GCAL_STORAGE_KEY = "lumen.gcal.token";
+
+function loadGcalTokenFromStorage() {
+  try {
+    const raw = localStorage.getItem(GCAL_STORAGE_KEY);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (!obj?.token || !obj?.exp) return null;
+    if (Date.now() >= obj.exp) return null;
+    return obj;
+  } catch { return null; }
+}
+function saveGcalTokenToStorage(token, exp) {
+  try { localStorage.setItem(GCAL_STORAGE_KEY, JSON.stringify({ token, exp })); } catch {}
+}
+function clearGcalTokenFromStorage() {
+  try { localStorage.removeItem(GCAL_STORAGE_KEY); } catch {}
+}
+
 function Calendar({ state, dispatch }) {
   const _now = new Date();
   const [nowMin, setNowMin] = React.useState(_now.getHours()*60 + _now.getMinutes());
   const [gEvents, setGEvents] = React.useState([]);
   const [gStatus, setGStatus] = React.useState("idle"); // idle | loading | connected | error
   const [gError, setGError] = React.useState("");
+
+  // Hydrate in-memory token from localStorage on first mount so the connection
+  // survives page reloads and re-logins.
+  if (!window.__GCAL_TOKEN) {
+    const saved = loadGcalTokenFromStorage();
+    if (saved) { window.__GCAL_TOKEN = saved.token; window.__GCAL_TOKEN_EXP = saved.exp; }
+  }
 
   React.useEffect(() => {
     const id = setInterval(() => { const n = new Date(); setNowMin(n.getHours()*60 + n.getMinutes()); }, 60000);
@@ -63,6 +89,7 @@ function Calendar({ state, dispatch }) {
           }
           window.__GCAL_TOKEN = resp.access_token;
           window.__GCAL_TOKEN_EXP = Date.now() + (resp.expires_in - 60) * 1000;
+          saveGcalTokenToStorage(window.__GCAL_TOKEN, window.__GCAL_TOKEN_EXP);
           resolve(resp.access_token);
         },
         error_callback: (err) => {
@@ -106,6 +133,7 @@ function Calendar({ state, dispatch }) {
     }
     window.__GCAL_TOKEN = null;
     window.__GCAL_TOKEN_EXP = 0;
+    clearGcalTokenFromStorage();
     setGEvents([]); setGStatus("idle");
   };
 
