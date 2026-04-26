@@ -11,6 +11,7 @@
 - **History** — 26-week activity heatmap and a list of completed tasks.
 - **Settings** — theme (dark/light), accent color, font, density, pomodoro lengths.
 - **Quick add** (`⌘/Ctrl + K`) — classifies tasks by keyword and picks a quadrant.
+- **Auth** — email/password and Google sign-in via Supabase; per-user `localStorage` keyed by session email.
 - **Mobile responsive** — drawer sidebar, stacked layouts, touch-friendly tap targets.
 
 ## Keyboard shortcuts

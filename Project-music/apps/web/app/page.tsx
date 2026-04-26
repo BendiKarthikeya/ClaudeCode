@@ -119,10 +119,28 @@ export default function Home() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col justify-center gap-8 p-6">
-      <div>
-        <h1 className="text-4xl font-bold">SyncJam</h1>
-        <p className="mt-2 text-white/60">Listen together, in sync, on any device. Free.</p>
+    <main className="relative mx-auto flex min-h-screen max-w-2xl flex-col justify-center gap-8 p-6">
+      {/* Ambient background glow */}
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute -top-40 left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-fuchsia-600/20 blur-[120px]" />
+        <div className="absolute bottom-0 right-0 h-[400px] w-[400px] rounded-full bg-purple-700/15 blur-[120px]" />
+        <div className="absolute top-1/3 left-0 h-[300px] w-[300px] rounded-full bg-pink-500/10 blur-[100px]" />
+      </div>
+
+      <div className="text-center">
+        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/60 backdrop-blur">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-fuchsia-400 opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-fuchsia-500" />
+          </span>
+          Live listening, together
+        </div>
+        <h1 className="bg-gradient-to-br from-white via-fuchsia-200 to-fuchsia-500 bg-clip-text text-6xl font-black tracking-tight text-transparent drop-shadow-[0_0_30px_rgba(217,70,239,0.25)] sm:text-7xl">
+          SyncJam
+        </h1>
+        <p className="mt-3 text-base text-white/50">
+          Listen together, in sync, on any device. <span className="text-fuchsia-300/80">Free.</span>
+        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
@@ -242,37 +260,46 @@ export default function Home() {
         </div>
       )}
 
-      <div>
-        <label className="mb-1 block text-sm text-white/60">Your name</label>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Alex"
-          maxLength={32}
-          className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 outline-none focus:border-white/30"
-        />
-      </div>
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-xl shadow-[0_8px_40px_-8px_rgba(217,70,239,0.15)] space-y-5">
+        <div>
+          <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-white/50">Your name</label>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Alex"
+            maxLength={32}
+            className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 outline-none transition focus:border-fuchsia-400/50 focus:bg-black/40 focus:ring-2 focus:ring-fuchsia-500/20"
+          />
+        </div>
 
-      <button
-        onClick={onCreate}
-        disabled={creating}
-        className="rounded-lg bg-fuchsia-600 px-5 py-3 font-semibold hover:bg-fuchsia-500 disabled:opacity-50"
-      >
-        {creating ? 'Creating…' : 'Create a room'}
-      </button>
-
-      <form onSubmit={onJoin} className="flex gap-2">
-        <input
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          placeholder="Enter room code"
-          className="flex-1 rounded-lg border border-white/10 bg-white/5 px-4 py-3 uppercase tracking-widest outline-none focus:border-white/30"
-          maxLength={6}
-        />
-        <button className="rounded-lg border border-white/10 px-5 py-3 hover:bg-white/5">
-          Join
+        <button
+          onClick={onCreate}
+          disabled={creating}
+          className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-fuchsia-600 to-purple-600 px-5 py-3.5 font-semibold text-white shadow-lg shadow-fuchsia-600/30 transition hover:shadow-xl hover:shadow-fuchsia-600/50 disabled:opacity-50"
+        >
+          <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+          <span className="relative">{creating ? 'Creating…' : '✨ Create a room'}</span>
         </button>
-      </form>
+
+        <div className="relative flex items-center gap-3 py-1">
+          <div className="h-px flex-1 bg-white/10" />
+          <span className="text-xs uppercase tracking-wider text-white/30">or join</span>
+          <div className="h-px flex-1 bg-white/10" />
+        </div>
+
+        <form onSubmit={onJoin} className="flex gap-2">
+          <input
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="ENTER ROOM CODE"
+            className="flex-1 rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-center font-mono uppercase tracking-[0.3em] outline-none transition placeholder:text-white/20 focus:border-fuchsia-400/50 focus:ring-2 focus:ring-fuchsia-500/20"
+            maxLength={6}
+          />
+          <button className="rounded-xl border border-white/10 bg-white/5 px-6 py-3 font-medium transition hover:border-fuchsia-400/40 hover:bg-fuchsia-500/10">
+            Join
+          </button>
+        </form>
+      </div>
 
       {err && <p className="text-sm text-red-400">{err}</p>}
     </main>
@@ -306,8 +333,10 @@ function ModeCard({
   return (
     <button
       onClick={onClick}
-      className={`rounded-xl border p-3 text-left transition ${
-        active ? 'border-fuchsia-500 bg-fuchsia-500/10' : 'border-white/10 hover:bg-white/5'
+      className={`group rounded-xl border p-4 text-left transition backdrop-blur ${
+        active
+          ? 'border-fuchsia-500/60 bg-fuchsia-500/10 shadow-lg shadow-fuchsia-600/20'
+          : 'border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.05]'
       } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
       <div className="font-semibold">{title}</div>
