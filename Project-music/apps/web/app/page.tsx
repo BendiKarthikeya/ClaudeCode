@@ -153,8 +153,9 @@ export default function Home() {
         <ModeCard
           active={mode === 'lan'}
           title="Same WiFi (LAN)"
-          desc="No internet needed. One device hosts."
-          onClick={() => setMode('lan')}
+          desc="Coming soon — local hosting in progress."
+          onClick={() => {}}
+          disabled
         />
       </div>
 
@@ -333,6 +334,7 @@ function ModeCard({
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
       className={`group rounded-xl border p-4 text-left transition backdrop-blur ${
         active
           ? 'border-fuchsia-500/60 bg-fuchsia-500/10 shadow-lg shadow-fuchsia-600/20'
