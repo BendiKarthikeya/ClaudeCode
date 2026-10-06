@@ -34,17 +34,15 @@ window.__TWEAKS = /*EDITMODE-BEGIN*/{
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 
+  <!-- Runtime config (generated from .env, gitignored) -->
+  <script src="env.js"></script>
+
   <!-- Google Identity Services (for Calendar token without replacing Supabase auth) -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script>
-    window.__GCAL_CLIENT_ID = "813202528043-vp0a5sp4mlfiv6vap06214vk041cjbhl.apps.googleusercontent.com";
-  </script>
 
   <!-- Supabase -->
   <script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script>
-    window.__SUPABASE_URL = "https://gococxdqkvtpkkfcatoc.supabase.co";
-    window.__SUPABASE_KEY = "sb_publishable_8JAxnD4lh1NdHFv1JDVhcA_j_XtmTmg";
     window.sb = window.supabase.createClient(window.__SUPABASE_URL, window.__SUPABASE_KEY);
   </script>
 
